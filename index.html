@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Roteiros Criativos</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container { max-width: 1400px; margin: 0 auto; }
+
+.header {
+  text-align: center;
+  color: white;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  font-size: 42px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.header p {
+  font-size: 16px;
+  opacity: 0.95;
+}
+
+.input-card {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  margin-bottom: 20px;
+}
+
+.input-group {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.input-group input {
+  flex: 1;
+  padding: 14px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.btn-generate {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-generate:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-generate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hint {
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
+.loading {
+  display: none;
+  text-align: center;
+  padding: 60px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.loading.show { display: block; }
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error {
+  display: none;
+  background: #fee;
+  color: #c00;
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.error.show { display: block; }
+
+.results {
+  display: none;
+}
+
+.results.show { display: block; }
+
+.results-header {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.results-header h2 {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.results-header p {
+  color: #666;
+  font-size: 14px;
+}
+
+.btn-pdf {
+  padding: 12px 24px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-pdf:hover {
+  background: #059669;
+}
+
+.btn-back {
+  padding: 10px 20px;
+  background: white;
+  border: 2px solid #667eea;
+  color: #667eea;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.btn-back:hover {
+  background: #667eea;
+  color: white;
+}
+
+.pillar {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.pillar-header {
+  border-left: 4px solid;
+  padding-left: 16px;
+  margin-bottom: 20px;
+}
+
+.pillar-1 .pillar-header { border-color: #667eea; }
+.pillar-2 .pillar-header { border-color: #10b981; }
+.pillar-3 .pillar-header { border-color: #f59e0b; }
+.pillar-4 .pillar-header { border-color: #ec4899; }
+.pillar-5 .pillar-header { border-color: #8b5cf6; }
+
+.pillar-header h3 {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.pillar-header p {
+  color: #666;
+  font-size: 13px;
+}
+
+.scripts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.script-card {
+  border: 2px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.script-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.script-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.script-num {
+  font-weight: 700;
+  font-size: 11px;
+  color: #667eea;
+  text-transform: uppercase;
+}
+
+.script-duration {
+  background: #f0f0f0;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+}
+
+.script-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.script-section {
+  margin-bottom: 10px;
+}
+
+.script-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.script-content {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #444;
+}
+
+.script-screen {
+  background: #f8f9fa;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
+
+.btn-copy {
+  width: 100%;
+  padding: 8px;
+  margin-top: 12px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #667eea;
+  cursor: pointer;
+}
+
+.btn-copy:hover {
+  background: #667eea;
+  color: white;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>🎬 Roteiros Criativos</h1>
+    <p>Cole o link de uma coleção e receba 15 roteiros estratégicos em segundos</p>
+  </div>
+
+  <div id="inputSection">
+    <div class="input-card">
+      <div class="input-group">
+        <input type="url" id="urlInput" placeholder="https://sujaloja.com.br/collections/nome-da-colecao">
+        <button class="btn-generate" onclick="generate()" id="btnGen">✨ Gerar Roteiros</button>
+      </div>
+      <p class="hint">Funciona com Shopify, VTEX, WooCommerce, Nuvemshop e outras plataformas</p>
+    </div>
+  </div>
+
+  <div class="error" id="error"></div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <h3>Analisando coleção...</h3>
+    <p>A IA está criando 15 roteiros estratégicos. Aguarde ~30 segundos.</p>
+  </div>
+
+  <div class="results" id="results"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+const PILLARS = [
+  { id: 1, name: 'Ângulos', desc: 'Diferentes entradas psicológicas', class: 'pillar-1' },
+  { id: 2, name: 'Conceitos', desc: 'Ideias centrais que elevam percepção', class: 'pillar-2' },
+  { id: 3, name: 'DSB', desc: 'Dor → Solução → Benefício', class: 'pillar-3' },
+  { id: 4, name: 'Full Funnel', desc: 'Consciência + Educação + Decisão', class: 'pillar-4' },
+  { id: 5, name: 'UGC / Creator', desc: 'Validação humana e proximidade', class: 'pillar-5' }
+];
+
+let currentData = null;
+
+async function generate() {
+  const url = document.getElementById('urlInput').value.trim();
+  
+  if (!url) {
+    showError('Por favor, insira o link da coleção');
+    return;
+  }
+
+  document.getElementById('inputSection').style.display = 'none';
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('error').classList.remove('show');
+  document.getElementById('results').classList.remove('show');
+
+  const prompt = `Você é um especialista em performance criativa para e-commerce.
+
+Link: ${url}
+
+Crie 15 roteiros de vídeo (15-30s), 5 pilares com 3 roteiros cada.
+
+ESTRUTURA: titulo, duracao, gancho, conteudo, cta, tela
+
+PILARES:
+1. ÂNGULOS - entradas psicológicas
+2. CONCEITOS - ideias centrais fortes
+3. DSB - Dor → Solução → Benefício
+4. FULL FUNNEL - consciência até decisão
+5. UGC - formato humano
+
+CRÍTICO: Use aspas simples (') nunca duplas ("). Sem quebras de linha nos textos. JSON compacto em uma linha.
+
+Responda SÓ JSON:
+{"colecao":"nome","nicho":"nicho","publico":"publico","pilares":[{"id":1,"roteiros":[{"titulo":"...","duracao":"20s","gancho":"...","conteudo":"...","cta":"...","tela":"..."}]}]}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': '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',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Erro na API');
+
+    let text = data.content[0].text.replace(/```json|```/g, '').trim();
+    
+    // Find JSON boundaries
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
+    
+    // Clean up
+    text = text.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'");
+    text = text.replace(/"([^"]*)\n([^"]*)"/g, '"$1 $2"');
+    text = text.replace(/,(\s*[}\]])/g, '$1');
+
+    currentData = JSON.parse(text);
+    renderResults();
+
+  } catch (err) {
+    showError(err.message || 'Erro ao gerar. Tente novamente!');
+    document.getElementById('inputSection').style.display = 'block';
+  } finally {
+    document.getElementById('loading').classList.remove('show');
+  }
+}
+
+function renderResults() {
+  const container = document.getElementById('results');
+  
+  let html = `
+    <button class="btn-back" onclick="reset()">← Nova Geração</button>
+    <div class="results-header">
+      <div>
+        <h2>${currentData.colecao}</h2>
+        <p><strong>Nicho:</strong> ${currentData.nicho} | <strong>Público:</strong> ${currentData.publico}</p>
+      </div>
+      <button class="btn-pdf" onclick="exportPDF()">📥 Baixar PDF</button>
+    </div>
+  `;
+
+  PILLARS.forEach((pillar, idx) => {
+    const pillarData = currentData.pilares[idx];
+    
+    html += `
+      <div class="pillar ${pillar.class}">
+        <div class="pillar-header">
+          <h3>Pilar ${pillar.id}: ${pillar.name}</h3>
+          <p>${pillar.desc}</p>
+        </div>
+        <div class="scripts-grid">
+    `;
+
+    pillarData.roteiros.forEach((script, sIdx) => {
+      html += `
+        <div class="script-card">
+          <div class="script-header">
+            <span class="script-num">Roteiro ${sIdx + 1}</span>
+            <span class="script-duration">⏱ ${script.duracao}</span>
+          </div>
+          <div class="script-title">${script.titulo}</div>
+          <div class="script-section">
+            <div class="script-label">🎯 Gancho</div>
+            <div class="script-content">${script.gancho}</div>
+          </div>
+          <div class="script-section">
+            <div class="script-label">📝 Conteúdo</div>
+            <div class="script-content">${script.conteudo}</div>
+          </div>
+          <div class="script-section">
+            <div class="script-label">📣 CTA</div>
+            <div class="script-content">${script.cta}</div>
+          </div>
+          <div class="script-section">
+            <div class="script-label">🎬 Tela</div>
+            <div class="script-screen">${script.tela}</div>
+          </div>
+          <button class="btn-copy" onclick='copyScript(${JSON.stringify(script).replace(/'/g, "&#39;")})'>📋 Copiar</button>
+        </div>
+      `;
+    });
+
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+  container.classList.add('show');
+}
+
+function copyScript(script) {
+  const text = `TÍTULO: ${script.titulo}\nDURAÇÃO: ${script.duracao}\n\n🎯 GANCHO\n${script.gancho}\n\n📝 CONTEÚDO\n${script.conteudo}\n\n📣 CTA\n${script.cta}\n\n🎬 TELA\n${script.tela}`;
+  navigator.clipboard.writeText(text).then(() => alert('✓ Roteiro copiado!'));
+}
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20;
+
+  // --- COVER PAGE ---
+  doc.setFillColor(240, 240, 245);
+  doc.rect(0, 0, 210, 297, 'F');
+  
+  doc.setFillColor(102, 126, 234);
+  doc.rect(0, 0, 210, 60, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(32);
+  doc.setFont(undefined, 'bold');
+  doc.text('ROTEIROS CRIATIVOS', 105, 30, { align: 'center' });
+  
+  doc.setFontSize(14);
+  doc.setFont(undefined, 'normal');
+  doc.text('Gerador de Roteiros para E-commerce', 105, 45, { align: 'center' });
+  
+  // Collection info
+  doc.setTextColor(50, 50, 50);
+  doc.setFontSize(20);
+  doc.setFont(undefined, 'bold');
+  doc.text(currentData.colecao, 20, 80);
+  
+  doc.setFontSize(11);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Nicho: ${currentData.nicho}`, 20, 92);
+  doc.text(`Publico: ${currentData.publico}`, 20, 100);
+  
+  // Stats boxes
+  const stats = [
+    { label: 'Pilares', value: '5' },
+    { label: 'Roteiros', value: '15' },
+    { label: 'Secoes/roteiro', value: '4' }
+  ];
+  
+  stats.forEach((stat, i) => {
+    const x = 20 + (i * 60);
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(x, 115, 50, 30, 3, 3, 'FD');
+    
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(102, 126, 234);
+    doc.text(stat.value, x + 25, 130, { align: 'center' });
+    
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(stat.label, x + 25, 140, { align: 'center' });
+  });
+  
+  // Pillars list
+  y = 165;
+  const pillarNames = ['Angulos', 'Conceitos', 'DSB', 'Full Funnel', 'UGC / Creator'];
+  const pillarColors = [
+    [102, 126, 234],
+    [16, 185, 129],
+    [245, 158, 11],
+    [236, 72, 153],
+    [139, 92, 246]
+  ];
+  
+  pillarNames.forEach((name, i) => {
+    const col = pillarColors[i];
+    doc.setFillColor(col[0], col[1], col[2], 20);
+    doc.roundedRect(20, y, 170, 12, 2, 2, 'F');
+    
+    doc.setFillColor(col[0], col[1], col[2]);
+    doc.rect(20, y, 3, 12, 'F');
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(col[0], col[1], col[2]);
+    doc.text(`Pilar ${i + 1}`, 28, y + 5);
+    
+    doc.setTextColor(50, 50, 50);
+    doc.text(name, 50, y + 5);
+    
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(PILLARS[i].desc, 28, y + 9);
+    
+    y += 15;
+  });
+  
+  // Footer
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} - roteiros.ia`, 105, 285, { align: 'center' });
+
+  // --- SCRIPT PAGES ---
+  PILLARS.forEach((pillar, pIdx) => {
+    const pillarData = currentData.pilares[pIdx];
+    const col = pillarColors[pIdx];
+    
+    pillarData.roteiros.forEach((script, sIdx) => {
+      doc.addPage();
+      
+      // Header bar
+      doc.setFillColor(col[0], col[1], col[2]);
+      doc.rect(0, 0, 210, 30, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text(`PILAR ${pIdx + 1}: ${pillar.name.toUpperCase()}`, 20, 12);
+      
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(8);
+      doc.text(`Roteiro ${sIdx + 1} de 3`, 20, 20);
+      doc.text(`Duracao: ${script.duracao}`, 160, 20);
+      
+      // Title
+      y = 45;
+      doc.setTextColor(50, 50, 50);
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      const titleLines = doc.splitTextToSize(script.titulo, 170);
+      doc.text(titleLines, 20, y);
+      y += (titleLines.length * 8) + 10;
+      
+      // Sections
+      const sections = [
+        { label: 'GANCHO', content: script.gancho, desc: 'Primeiros 3 segundos' },
+        { label: 'CONTEUDO', content: script.conteudo, desc: 'Desenvolvimento central' },
+        { label: 'CTA', content: script.cta, desc: 'Call to action' },
+        { label: 'TELA', content: script.tela, desc: 'Direcao visual' }
+      ];
+      
+      sections.forEach(section => {
+        if (y > 250) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        // Section box
+        const contentLines = doc.splitTextToSize(section.content, 160);
+        const boxHeight = (contentLines.length * 5) + 20;
+        
+        doc.setFillColor(250, 250, 250);
+        doc.roundedRect(20, y, 170, boxHeight, 3, 3, 'F');
+        
+        doc.setFillColor(col[0], col[1], col[2]);
+        doc.rect(20, y, 3, boxHeight, 'F');
+        
+        // Label
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(col[0], col[1], col[2]);
+        doc.text(section.label, 28, y + 8);
+        
+        doc.setFontSize(7);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(120, 120, 120);
+        doc.text(section.desc, 28, y + 13);
+        
+        // Content
+        doc.setFontSize(9);
+        doc.setTextColor(60, 60, 60);
+        doc.text(contentLines, 28, y + 19);
+        
+        y += boxHeight + 6;
+      });
+      
+      // Page number
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Pagina ${doc.internal.getNumberOfPages()}`, 190, 285, { align: 'right' });
+    });
+  });
+
+  doc.save(`roteiros-${currentData.colecao.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+}
+
+function showError(msg) {
+  const el = document.getElementById('error');
+  el.textContent = '⚠ ' + msg;
+  el.classList.add('show');
+}
+
+function reset() {
+  document.getElementById('inputSection').style.display = 'block';
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('urlInput').value = '';
+}
+
+document.getElementById('urlInput').addEventListener('keypress', e => {
+  if (e.key === 'Enter') generate();
+});
+</script>
+
+</body>
+</html>
